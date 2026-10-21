@@ -1,0 +1,31 @@
+diff --git a/osfmk/arm64/start.s b/osfmk/arm64/start.s
+--- a/osfmk/arm64/start.s
++++ b/osfmk/arm64/start.s
+@@ -785,6 +785,27 @@
+ 	MSR_SCTLR_EL1_X0
+ 	isb		sy
+ 
++#if defined(SWEET)
++	/*
++	 * SWEET bring-up probes.  Each draws a white 32x16 block at
++	 * (0*40, 1240) in the boot framebuffer.  The stage-0 band at row 1200
++	 * already proves start.s was entered; these two narrow the window
++	 * between "bootstrap page tables built" and "arm_init called".
++	 * Clobbers only x6/x7/x8, which are dead here.
++	 */
++	MOV64	x7, 0x9d91bd00
++	mov	x8, #16
++	mov	w6, #-1
++Lsweet_probe0:
++	stp	w6, w6, [x7]
++	stp	w6, w6, [x7, #8]
++	stp	w6, w6, [x7, #16]
++	stp	w6, w6, [x7, #24]
++	add	x7, x7, #4320
++	subs	x8, x8, #1
++	b.ne	Lsweet_probe0
++#endif
++
+ #if !VMAPPLE && !defined(SWEET)
+ 	MOV64	x1, SCTLR_EL1_DEFAULT
+ 	cmp		x0, x1
