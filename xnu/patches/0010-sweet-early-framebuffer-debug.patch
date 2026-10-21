@@ -140,7 +140,7 @@ index ccbb188..777aca4 100644
  	/* Ensure TTEs are visible */
  	dsb		ish
  
-@@ -745,6 +745,26 @@
+@@ -745,6 +745,28 @@
  	MSR_SCTLR_EL1_X0
  	isb		sy
  
@@ -159,7 +159,9 @@ index ccbb188..777aca4 100644
 +	stp	w6, w6, [x7, #8]
 +	stp	w6, w6, [x7, #16]
 +	stp	w6, w6, [x7, #24]
-+	add	x7, x7, #4320
++	/* add immediate is 12-bit: 4000 + 320 == 4320 == one row */
++	add	x7, x7, #4000
++	add	x7, x7, #320
 +	subs	x8, x8, #1
 +	b.ne	Lsweet_probe0b
 +#endif
