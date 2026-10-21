@@ -140,30 +140,55 @@ index ccbb188..777aca4 100644
  	/* Ensure TTEs are visible */
  	dsb		ish
  
-@@ -745,6 +745,28 @@
+@@ -740,11 +740,53 @@
+ 	PAC_INIT_KEY_STATE tmp=x0, tmp2=x1
+ #endif /* HAS_APPLE_PAC */
+ 
++#if defined(SWEET)
++	/* pA: 64x16 white block at framebuffer byte 0x9d95b180 */
++	MOV64	x7, 0x9d95b180
++	mov	w6, #-1
++	mov	x8, #16
++Lsweet_pA_row:
++	mov	x9, #64
++Lsweet_pA_px:
++	str	w6, [x7], #4
++	subs	x9, x9, #1
++	b.ne	Lsweet_pA_px
++	add	x7, x7, #4095
++	add	x7, x7, #225
++	subs	x8, x8, #1
++	b.ne	Lsweet_pA_row
++#endif
++
+ 	// Enable caches, MMU, ROP and JOP
+ 	MOV64   x0, SCTLR_EL1_DEFAULT
  	MSR_SCTLR_EL1_X0
  	isb		sy
  
 +#if defined(SWEET)
-+	/*
-+	 * SWEET bring-up probe: white 32x16 block at (0, 1240) of the boot
-+	 * framebuffer.  The stage-0 band at row 1200 proves start.s was
-+	 * entered; this one proves the MMU/caches came up.  Clobbers only
-+	 * x6/x7/x8, which are dead here.
-+	 */
++	/* pB: 64x16 white block at framebuffer byte 0x9d91bd00 */
 +	MOV64	x7, 0x9d91bd00
-+	mov	x8, #16
 +	mov	w6, #-1
-+Lsweet_probe0b:
-+	stp	w6, w6, [x7]
-+	stp	w6, w6, [x7, #8]
-+	stp	w6, w6, [x7, #16]
-+	stp	w6, w6, [x7, #24]
-+	/* add immediate is 12-bit: 4000 + 320 == 4320 == one row */
-+	add	x7, x7, #4000
-+	add	x7, x7, #320
++	mov	x8, #16
++Lsweet_pB_row:
++	mov	x9, #64
++Lsweet_pB_px:
++	str	w6, [x7], #4
++	subs	x9, x9, #1
++	b.ne	Lsweet_pB_px
++	add	x7, x7, #4095
++	add	x7, x7, #225
 +	subs	x8, x8, #1
-+	b.ne	Lsweet_probe0b
++	b.ne	Lsweet_pB_row
++#endif
++
++#if defined(SWEET)
++	/* probe C: DRAM magic, only needs the identity mapping */
++	MOV64	x9, 0xa1ff0100
++	MOV64	x10, 0x53574545
++	str	x10, [x9]
++	dsb	sy
 +#endif
 +
  #if !VMAPPLE && !defined(SWEET)
