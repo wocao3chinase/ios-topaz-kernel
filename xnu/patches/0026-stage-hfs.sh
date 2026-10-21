@@ -1,14 +1,17 @@
 #!/bin/bash
 # Stage Apple's open source HFS for the SWEET built-in filesystem (bsd/sweet_hfs).
 # dxb runs patches/*.sh from the XNU source root before applying *.patch.
-set -euo pipefail
+set -eu
+# 有些 runner 的 shell 不认 -o pipefail（会报 "invalid option name"），
+# 这里做成可选：支持就打开，不支持也不影响脚本继续跑。
+set -o pipefail 2>/dev/null || true
 
-[[ "${MACHINE_CONFIG:-}" == SWEET ]] || exit 0
-[[ "${MACOS_VERSION:-}" == 13.5 ]] || {
+[ "${MACHINE_CONFIG:-}" = SWEET ] || exit 0
+[ "${MACOS_VERSION:-}" = 13.5 ] || {
     echo 'SWEET HFS integration requires xnu-8796.141.3 (macOS 13.5)' >&2
     exit 1
 }
-[[ -f bsd/kern/bsd_init.c ]] || exit 1
+[ -f bsd/kern/bsd_init.c ] || exit 1
 
 # hfs-627.100.6 is paired with xnu-8796.141.3 in Apple's macos-135
 # release.json. Fetch the immutable commit, never a moving branch/tag.
@@ -19,7 +22,7 @@ git init -q "$hfs_tmp"
 git -C "$hfs_tmp" fetch -q --depth 1 \
     https://github.com/apple-oss-distributions/hfs "$hfs_sha"
 git -C "$hfs_tmp" checkout -q FETCH_HEAD
-[[ "$(git -C "$hfs_tmp" rev-parse HEAD)" == "$hfs_sha" ]]
+[ "$(git -C "$hfs_tmp" rev-parse HEAD)" = "$hfs_sha" ]
 
 python3 - "$hfs_tmp" <<'PY'
 from pathlib import Path

@@ -1,8 +1,11 @@
 #!/bin/bash
 # Pinned, portable constant-time AES for the SWEET legacy CBC/ECB API.
-set -euo pipefail
-[[ "${MACHINE_CONFIG:-}" == SWEET ]] || exit 0
-[[ -f libkern/crypto/corecrypto_aes.c ]] || exit 1
+set -eu
+# 有些 runner 的 shell 不认 -o pipefail（会报 "invalid option name"），
+# 这里做成可选：支持就打开，不支持也不影响脚本继续跑。
+set -o pipefail 2>/dev/null || true
+[ "${MACHINE_CONFIG:-}" = SWEET ] || exit 0
+[ -f libkern/crypto/corecrypto_aes.c ] || exit 1
 bearssl_sha=7bea48e5e850ab4cafbe68d3765cdaba13a86d6f
 bearssl_tmp=$(mktemp -d)
 trap 'rm -rf "$bearssl_tmp"' EXIT
@@ -10,7 +13,7 @@ git init -q "$bearssl_tmp"
 git -C "$bearssl_tmp" fetch -q --depth 1 \
     https://www.bearssl.org/git/BearSSL "$bearssl_sha"
 git -C "$bearssl_tmp" checkout -q FETCH_HEAD
-[[ "$(git -C "$bearssl_tmp" rev-parse HEAD)" == "$bearssl_sha" ]]
+[ "$(git -C "$bearssl_tmp" rev-parse HEAD)" = "$bearssl_sha" ]
 python3 - "$bearssl_tmp" <<'PY'
 from pathlib import Path
 import shutil

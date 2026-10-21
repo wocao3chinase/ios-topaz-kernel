@@ -1,13 +1,16 @@
 #!/bin/bash
 # dxb runs patches/*.sh from the XNU source root before applying *.patch.
-set -euo pipefail
+set -eu
+# 有些 runner 的 shell 不认 -o pipefail（会报 "invalid option name"），
+# 这里做成可选：支持就打开，不支持也不影响脚本继续跑。
+set -o pipefail 2>/dev/null || true
 
-[[ "${MACHINE_CONFIG:-}" == SWEET ]] || exit 0
-[[ "${MACOS_VERSION:-}" == 13.5 ]] || {
+[ "${MACHINE_CONFIG:-}" = SWEET ] || exit 0
+[ "${MACOS_VERSION:-}" = 13.5 ] || {
     echo 'SWEET libpthread integration requires xnu-8796.141.3 (macOS 13.5)' >&2
     exit 1
 }
-[[ -f bsd/pthread/pthread_shims.c ]] || exit 1
+[ -f bsd/pthread/pthread_shims.c ] || exit 1
 
 # libpthread-514.100.2 is paired with xnu-8796.141.3 in Apple's macos-135
 # release.json. Fetch the immutable commit, never a moving branch/tag.
@@ -18,7 +21,7 @@ git init -q "$pthread_tmp"
 git -C "$pthread_tmp" fetch -q --depth 1 \
     https://github.com/apple-oss-distributions/libpthread "$pthread_sha"
 git -C "$pthread_tmp" checkout -q FETCH_HEAD
-[[ "$(git -C "$pthread_tmp" rev-parse HEAD)" == "$pthread_sha" ]]
+[ "$(git -C "$pthread_tmp" rev-parse HEAD)" = "$pthread_sha" ]
 
 python3 - "$pthread_tmp" <<'PY'
 from pathlib import Path
