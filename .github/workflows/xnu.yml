@@ -52,6 +52,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Normalize line endings
+        run: |
+          # 仓库里的快照是 Windows CRLF。带 CR 的 .sh 会让 bash 把选项读成
+          # "eu\r"（invalid option name）、把 exit 的参数读成 "1\r"
+          # （numeric argument required）；带 CR 的 .patch 也和 LF 源码对不上。
+          # 构建前统一去掉 CR，避免为此重传上百个文件。
+          find xnu/patches -type f -exec perl -pi -e 's/\r$//' {} +
+          file xnu/patches/0019-stage-libpthread.sh xnu/patches/0107-sweet-start-mmu-probe.patch
+
       - name: Fetch build script
         run: |
           git init -q dxb
